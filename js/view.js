@@ -1,5 +1,6 @@
 import AddTodo from "./components/addTodo.js";
 import Modal from "./components/modal.js";
+import Filters from "./components/filter.js";
 
 export default class View{
     constructor(){
@@ -7,13 +8,41 @@ export default class View{
         this.table = document.getElementById('table')
         this.addTodoForm = new AddTodo()
         this.modal = new Modal()
+        this.filters = new Filters()
 
         this.addTodoForm.onClick((title, desciption) => this.addTodo(title, desciption))
         this.modal.onClick( (id, values) => this.editTodo(id, values))
+        this.filters.onClick( filters => this.filter(filters))
     }
 
     setModel(model){
         this.model = model;
+    }
+
+    filter(filters){
+        const {type, words} = filters
+        const [,...rows] = this.table.getElementsByTagName('tr')
+        for(const row of rows){
+            const [title, desciption, completed] = row.children
+            let shouldHide = false
+            if(words){
+                shouldHide = !title.innerText.includes(words) && !desciption.innerText.includes(words)
+            }
+
+            const shouldBeCompleted = type === 'completed'
+            const isCompleted = completed.children[0].checked
+
+            if(type !== 'all' && shouldBeCompleted !== isCompleted){
+                shouldHide = true
+            }
+
+            if(shouldHide){
+                row.classList.add('d-none')
+            }
+            else{
+                row.classList.remove('d-none')
+            }
+        }
     }
 
     render(){
@@ -47,7 +76,12 @@ export default class View{
         editBtn.innerHTML = '<i class="fa fa-pencil"></i>'
         editBtn.setAttribute('data-toggle', 'modal')
         editBtn.setAttribute('data-target', '#modal')
-        editBtn.onclick = () => this.modal.setValues(todo) 
+        editBtn.onclick = () => this.modal.setValues({
+            id: todo.id,
+            title: row.children[0].innerText,
+            description: row.children[1].innerText,
+            completed: row.children[2].children[0].checked
+        }) 
         row.children[3].appendChild(editBtn)
 
         const removeBtn = document.createElement('button')
